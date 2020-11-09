@@ -14,8 +14,12 @@
     <script type="text/javascript">
       var config = {
         type: Phaser.AUTO,
-        width: 800,
+        width: 1000,
         height: 600,
+        scale: {
+          mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+        },
         physics: {
           default: 'arcade',
           arcade: {
@@ -49,6 +53,10 @@
           frameWidth: 38,
           frameHeight: 40,
         });
+        this.load.spritesheet('player_2', 'Player/player_2.png', {
+          frameWidth: 38,
+          frameHeight: 40,
+        });
       }
 
       function create() {
@@ -69,11 +77,13 @@
 
         // The player and its settings
         player = this.physics.add.sprite(100, 450, 'player_1');
-        player.setScale(0.7);
+        player_2 = this.physics.add.sprite(200, 450, 'player_2');
+        player.setScale(0.58);
+        player_2.setScale(0.5);
         //  Player physics properties. Give the little guy a slight bounce.
 
         player.setCollideWorldBounds(true);
-
+        player_2.setCollideWorldBounds(true);
         //  Our player animations, turning, walking left and walking right.
         this.anims.create({
           key: 'left',
@@ -91,7 +101,7 @@
             start: 12,
             end: 15,
           }),
-          frameRate: 8,
+          frameRate: 10,
           //   repeat: -1,
         });
 
@@ -101,8 +111,8 @@
             start: 9,
             end: 11,
           }),
-          frameRate: 8,
-          //   repeat: -1,
+          frameRate: 10,
+          // repeat: -1,
         });
 
         this.anims.create({
@@ -159,6 +169,8 @@
         });
         //  Collide the player with the platforms
         this.physics.add.collider(player, platforms);
+        this.physics.add.collider(player_2, platforms);
+        this.physics.add.collider(player, player_2);
       }
 
       function update() {
