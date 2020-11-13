@@ -37,6 +37,7 @@
       var player;
       var stars;
       var bombs;
+      var explode;
       var platforms;
       var cursors;
       var score = 0;
@@ -57,6 +58,14 @@
           frameWidth: 38,
           frameHeight: 40,
         });
+        this.load.spritesheet('bomb','Player/bombs.png',{
+          frameWidth: 18,
+          frameHeight: 16,
+        });
+        this.load.spritesheet('explode','Player/explode.png',{
+          frameWidth: 38,
+          frameHeight: 40,
+        });
       }
 
       function create() {
@@ -74,6 +83,7 @@
             setXY: { x: 8, y: j, stepX: 16 },
           });
         }
+
 
         // The player and its settings
         player = this.physics.add.sprite(100, 450, 'player_1');
@@ -171,6 +181,7 @@
         this.physics.add.collider(player, platforms);
         this.physics.add.collider(player_2, platforms);
         this.physics.add.collider(player, player_2);
+    
       }
 
       function update() {
@@ -212,9 +223,44 @@
         } else {
           player.setVelocityX(0);
         }
+        if (cursors.space.isDown) {
+          bombs = this.physics.add.sprite(player.x, player.y, 'bomb');
+          bombs.setScale(1.5);
+          bombs.setCollideWorldBounds(true);
+          this.anims.create({
+            key: 'space',
+            frames: this.anims.generateFrameNumbers('bomb', {
+              start: 0,
+              end: 5,
+            }),
+            frameRate: 1,
+          });
+          this.physics.add.collider(bombs, platforms);
+          this.physics.add.collider(player, bombs);
+          this.physics.add.collider(player_2, bombs);
+          bombs.anims.play('space');
+          // bombs.onComplete(Bombexp());
+        }
+
         if (!in_mov) {
           player.anims.play('turn');
         }
+      }
+      
+
+      function Bombexp(){
+        explode = this.physics.add.sprite(player.x+10, player.y+10, 'explode');
+        explode.setScale(1.5);
+        explode.setCollideWorldBounds(true);
+        this.anims.create({
+          key: 'exp',
+          frames: this.anims.generateFrameNumbers('explode', {
+            start: 0,
+            end: 2,
+          }),
+          frameRate: 1,
+        });
+        explode.anims.play('exp');
       }
     </script>
   </body>
