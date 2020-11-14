@@ -58,11 +58,11 @@
           frameWidth: 38,
           frameHeight: 40,
         });
-        this.load.spritesheet('bomb','Player/bombs.png',{
+        this.load.spritesheet('bomb', 'Player/bombs.png', {
           frameWidth: 18,
           frameHeight: 16,
         });
-        this.load.spritesheet('explode','Player/explode.png',{
+        this.load.spritesheet('explode', 'Player/explode.png', {
           frameWidth: 38,
           frameHeight: 40,
         });
@@ -83,7 +83,6 @@
             setXY: { x: 8, y: j, stepX: 16 },
           });
         }
-
 
         // The player and its settings
         player = this.physics.add.sprite(100, 450, 'player_1');
@@ -181,7 +180,6 @@
         this.physics.add.collider(player, platforms);
         this.physics.add.collider(player_2, platforms);
         this.physics.add.collider(player, player_2);
-    
       }
 
       function update() {
@@ -234,6 +232,7 @@
               end: 5,
             }),
             frameRate: 1,
+            repeat: -1,
           });
           this.physics.add.collider(bombs, platforms);
           this.physics.add.collider(player, bombs);
@@ -246,10 +245,13 @@
           player.anims.play('turn');
         }
       }
-      
 
-      function Bombexp(){
-        explode = this.physics.add.sprite(player.x+10, player.y+10, 'explode');
+      function Bombexp() {
+        explode = this.physics.add.sprite(
+          player.x + 10,
+          player.y + 10,
+          'explode'
+        );
         explode.setScale(1.5);
         explode.setCollideWorldBounds(true);
         this.anims.create({
