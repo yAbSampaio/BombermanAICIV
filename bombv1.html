@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <title>Making your first Phaser 3 Game - Part 10</title>
     <script src="./phaser.js"></script>
+    <script src="./functions.js"></script>
     <style type="text/css">
       body {
         margin: 0;
@@ -14,8 +15,8 @@
     <script type="text/javascript">
       var config = {
         type: Phaser.AUTO,
-        width: 1000,
-        height: 600,
+        width: 1008,
+        height: 592,
         scale: {
           mode: Phaser.Scale.FIT,
           autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -43,13 +44,21 @@
       var score = 0;
       var gameOver = false;
       var scoreText;
+      var map;
+      var grounds;
+      var blocks_immutable;
+      var blocks_mutable;
+      var tile_edge = 24;
+      var tile_half_edge = tile_edge/2;
+      var space_pressed = false;
 
       var game = new Phaser.Game(config);
 
       function preload() {
         this.load.image('ground', 'Player/map_ground_1.png');
+        this.load.image('block_mutable', 'Player/map_box_1.png');
         this.load.image('wall', 'Player/map_wall_1.png');
-        this.load.image('block', 'Player/map_block_1.png');
+        this.load.image('block_immutable', 'Player/map_block_1.png');
         this.load.spritesheet('player_1', 'Player/player_1.png', {
           frameWidth: 38,
           frameHeight: 40,
@@ -72,23 +81,38 @@
         //  The platforms group contains the ground and the 2 ledges we can jump on
         platforms = this.physics.add.staticGroup();
         grounds = this.physics.add.staticGroup();
+        blocks_mutable = this.physics.add.staticGroup();
+        blocks_immutable = this.physics.add.staticGroup();
+        var percentages_range_obj = {
+            100: {name:"ground", code:0},
+            70: {name:"block_immutable", code:-1},
+            50: {name:"block_mutable", code:1},
+            10: {name:"buff_bomb", code: 2},
+            5: {name:"buff_explosion", code: 3}
+        };
 
+        var n_players = 4;
+        var distance = 10 //distance between players in tiles
+        //sort players positions
+        var positions = sortPlayersPosition(config.width/tile_edge, config.height/tile_edge, n_players, distance)
+        //generate map content
+        map = generateMapContent(Math.floor(config.width/tile_edge), Math.floor(config.height/tile_edge), grounds, blocks_mutable, blocks_immutable, percentages_range_obj);
+        
         //  Here we create the ground.
         //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-
-        for (let j = 8; j < config.height; j += 16) {
+        /*for (let j = 8; j < config.height; j += 16) {
           grounds.createMultiple({
             key: 'ground',
             repeat: config.width / 16,
             setXY: { x: 8, y: j, stepX: 16 },
           });
-        }
+        }*/
 
         // The player and its settings
         player = this.physics.add.sprite(100, 450, 'player_1');
         player_2 = this.physics.add.sprite(200, 450, 'player_2');
-        player.setScale(0.58);
-        player_2.setScale(0.5);
+        player.setScale(0.45);
+        player_2.setScale(0.4);
         //  Player physics properties. Give the little guy a slight bounce.
 
         player.setCollideWorldBounds(true);
@@ -145,39 +169,30 @@
 
         //Create the Walls
         platforms.createMultiple({
-          key: 'block',
-          repeat: config.width / 16,
-          setXY: { x: 8, y: 8, stepX: 16 },
+          key: 'block_immutable',
+          repeat: config.width / tile_edge,
+          setXY: { x: tile_half_edge, y: tile_half_edge, stepX: tile_edge },
         });
         platforms.createMultiple({
-          key: 'block',
-          repeat: config.width / 16,
-          setXY: { x: 8, y: config.height - 8, stepX: 16 },
+          key: 'block_immutable',
+          repeat: config.width / tile_edge,
+          setXY: { x: tile_half_edge, y: config.height - tile_half_edge, stepX: tile_edge },
         });
         platforms.createMultiple({
-          key: 'wall',
-          repeat: config.height / 16,
-          setXY: { x: 8, y: 8, stepY: 16 },
+          key: 'block_immutable',
+          repeat: config.height / tile_edge,
+          setXY: { x: tile_half_edge, y: tile_half_edge, stepY: tile_edge },
         });
         platforms.createMultiple({
-          key: 'wall',
-          repeat: config.height / 16,
-          setXY: { x: config.width - 8, y: 8, stepY: 16 },
+          key: 'block_immutable',
+          repeat: config.height / tile_edge,
+          setXY: { x: config.width - tile_half_edge, y: tile_half_edge, stepY: tile_edge },
         });
 
-        platforms.createMultiple({
-          key: 'block',
-          repeat: 10,
-          setXY: { x: 56, y: 72, stepY: 16 },
-        });
-
-        platforms.createMultiple({
-          key: 'block',
-          repeat: 20,
-          setXY: { x: 200, y: 300, stepX: 16 },
-        });
         //  Collide the player with the platforms
         this.physics.add.collider(player, platforms);
+        this.physics.add.collider(player, blocks_mutable);
+        this.physics.add.collider(player, blocks_immutable);
         this.physics.add.collider(player_2, platforms);
         this.physics.add.collider(player, player_2);
       }
@@ -188,7 +203,7 @@
         }
 
         var in_mov = false;
-
+        
         if (cursors.up.isDown) {
           player.setVelocityY(-160);
 
@@ -221,7 +236,11 @@
         } else {
           player.setVelocityX(0);
         }
-        if (cursors.space.isDown) {
+        if(cursors.space.isDown && !space_pressed){
+            space_pressed = true;
+        }
+        if (cursors.space.isUp && space_pressed) {
+            space_pressed = false;
           bombs = this.physics.add.sprite(player.x, player.y, 'bomb');
           bombs.setScale(1.5);
           bombs.setCollideWorldBounds(true);
@@ -231,13 +250,13 @@
               start: 0,
               end: 5,
             }),
-            frameRate: 1,
-            repeat: -1,
+            frameRate: 2,
           });
           this.physics.add.collider(bombs, platforms);
           this.physics.add.collider(player, bombs);
           this.physics.add.collider(player_2, bombs);
           bombs.anims.play('space');
+          bombs.on('animationcomplete', function(){this.destroy()})
           // bombs.onComplete(Bombexp());
         }
 
