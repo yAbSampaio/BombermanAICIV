@@ -51,7 +51,7 @@
       var tile_edge = 24;
       var tile_half_edge = tile_edge/2;
       var space_pressed = false;
-
+      var map_content = {width: config.width/tile_edge, height: config.height/tile_edge, tiled_map: null}
       var game = new Phaser.Game(config);
 
       function preload() {
@@ -87,32 +87,48 @@
             100: {name:"ground", code:0},
             70: {name:"block_immutable", code:-1},
             50: {name:"block_mutable", code:1},
-            10: {name:"buff_bomb", code: 2},
-            5: {name:"buff_explosion", code: 3}
+            10: {name:"buff", code: 2}
         };
-
         var n_players = 4;
-        var distance = 10 //distance between players in tiles
+        var distance = 20 //distance in tiles between players
         //sort players positions
-        var positions = sortPlayersPosition(config.width/tile_edge, config.height/tile_edge, n_players, distance)
-        //generate map content
-        map = generateMapContent(Math.floor(config.width/tile_edge), Math.floor(config.height/tile_edge), grounds, blocks_mutable, blocks_immutable, percentages_range_obj);
+        var positions = sortPlayersPosition(map_content.width, map_content.height, n_players, distance)
+        //console.log(positions)
         
-        //  Here we create the ground.
-        //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-        /*for (let j = 8; j < config.height; j += 16) {
-          grounds.createMultiple({
-            key: 'ground',
-            repeat: config.width / 16,
-            setXY: { x: 8, y: j, stepX: 16 },
-          });
-        }*/
+        
+        var spawn_areas = calcStartArea(positions, map_content.width, map_content.height);
+        
+        //console.log(spawn_areas)
+        
+        //generate map content
+        var map = generateMapContent(map_content.width, map_content.height, grounds, blocks_mutable, blocks_immutable, percentages_range_obj, spawn_areas);
+        
+        //draw map
+        for(let i = 0; i < map.length; i++){
+            for(let j = 0; j < map[i].length; j++){
+                if(i == 0 || j == 0 || i == map.length-1 || j == map[i].length-1){
+                    blocks_immutable.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "wall")
+                }else
+                if(map[i][j] == -1){
+                    blocks_immutable.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "block_immutable")
+                }else{
+                    grounds.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "ground")
+                    if(map[i][j] != 0){
+                        blocks_mutable.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "block_mutable")
+                    }
+                }
+            }
+        }
 
         // The player and its settings
-        player = this.physics.add.sprite(100, 450, 'player_1');
-        player_2 = this.physics.add.sprite(200, 450, 'player_2');
+        player = this.physics.add.sprite(positions[0].x*tile_edge+tile_half_edge, positions[0].y*tile_edge+tile_half_edge, 'player_1');
+        player_2 = this.physics.add.sprite(positions[1].x*tile_edge+tile_half_edge, positions[1].y*tile_edge+tile_half_edge, 'player_2');
+        player_3 = this.physics.add.sprite(positions[2].x*tile_edge+tile_half_edge, positions[2].y*tile_edge+tile_half_edge, 'player_2');
+        player_4 = this.physics.add.sprite(positions[3].x*tile_edge+tile_half_edge, positions[3].y*tile_edge+tile_half_edge, 'player_2');
         player.setScale(0.45);
-        player_2.setScale(0.4);
+        player_2.setScale(0.45);
+        player_3.setScale(0.45);
+        player_4.setScale(0.45);
         //  Player physics properties. Give the little guy a slight bounce.
 
         player.setCollideWorldBounds(true);
@@ -167,27 +183,6 @@
         //  Input Events
         cursors = this.input.keyboard.createCursorKeys();
 
-        //Create the Walls
-        platforms.createMultiple({
-          key: 'block_immutable',
-          repeat: config.width / tile_edge,
-          setXY: { x: tile_half_edge, y: tile_half_edge, stepX: tile_edge },
-        });
-        platforms.createMultiple({
-          key: 'block_immutable',
-          repeat: config.width / tile_edge,
-          setXY: { x: tile_half_edge, y: config.height - tile_half_edge, stepX: tile_edge },
-        });
-        platforms.createMultiple({
-          key: 'block_immutable',
-          repeat: config.height / tile_edge,
-          setXY: { x: tile_half_edge, y: tile_half_edge, stepY: tile_edge },
-        });
-        platforms.createMultiple({
-          key: 'block_immutable',
-          repeat: config.height / tile_edge,
-          setXY: { x: config.width - tile_half_edge, y: tile_half_edge, stepY: tile_edge },
-        });
 
         //  Collide the player with the platforms
         this.physics.add.collider(player, platforms);
@@ -195,6 +190,7 @@
         this.physics.add.collider(player, blocks_immutable);
         this.physics.add.collider(player_2, platforms);
         this.physics.add.collider(player, player_2);
+        
       }
 
       function update() {
