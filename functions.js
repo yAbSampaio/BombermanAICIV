@@ -143,3 +143,69 @@ function generateMapContent(
   }
   return map;
 }
+//test if there is a way to reach all players
+function wayPlayerToPlayer(map, positions_obj, queue, done = {}) {
+  /*console.log(queue);
+  console.log(positions_obj);
+  console.log(queue.length);
+  console.log(done);*/
+
+  if (queue.length == 0) {
+    //if the queue is empty, it's a invalid map
+    return false;
+  }
+  if (done["" + queue[0].x + "," + queue[0].y] == null) {
+    if (positions_obj["" + queue[0].x + "," + queue[0].y]) {
+      delete positions_obj["" + queue[0].x + "," + queue[0].y];
+    }
+    //test whether all players were found
+    if (
+      Object.keys(positions_obj).length === 0 &&
+      positions_obj.constructor === Object
+    ) {
+      //if all players found, is a valid map
+      return true;
+    }
+    //test whether can go to next position, whether is on done list and whether
+    //next position is a immutable block
+    //MOVE UP
+    if (
+      queue[0].y > 0 &&
+      done["" + queue[0].x + "," + (queue[0].y - 1)] == null &&
+      map[queue[0].x][queue[0].y - 1] != -1
+    ) {
+      //push new position to queue
+      queue.push({ x: queue[0].x, y: queue[0].y - 1 });
+    }
+    //MOVE RIGHT
+    if (
+      queue[0].x < map.length - 1 &&
+      done["" + (queue[0].x + 1) + "," + queue[0].y] == null &&
+      map[queue[0].x + 1][queue[0].y] != -1
+    ) {
+      queue.push({ x: queue[0].x + 1, y: queue[0].y });
+    }
+    //MOVE DOWN
+    if (
+      queue[0].y < map[0].length - 1 &&
+      done["" + queue[0].x + "," + (queue[0].y + 1)] == null &&
+      map[queue[0].x][queue[0].y + 1] != -1
+    ) {
+      queue.push({ x: queue[0].x, y: queue[0].y + 1 });
+    }
+    //MOVE LEFT
+    if (
+      queue[0].x > 0 &&
+      done["" + (queue[0].x - 1) + "," + queue[0].y] == null &&
+      map[queue[0].x - 1][queue[0].y] != -1
+    ) {
+      queue.push({ x: queue[0].x - 1, y: queue[0].y });
+    }
+    //set current position as done
+    done["" + queue[0].x + "," + queue[0].y] = true;
+  }
+  //shift queue 1 position
+  queue.shift();
+  //run next position
+  return wayPlayerToPlayer(map, positions_obj, queue, done);
+}

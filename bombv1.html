@@ -85,7 +85,7 @@
         blocks_immutable = this.physics.add.staticGroup();
         var percentages_range_obj = {
             100: {name:"ground", code:0},
-            70: {name:"block_immutable", code:-1},
+            90: {name:"block_immutable", code:-1},
             50: {name:"block_mutable", code:1},
             10: {name:"buff", code: 2}
         };
@@ -101,12 +101,27 @@
         //console.log(spawn_areas)
         
         //generate map content
-        var map = generateMapContent(map_content.width, map_content.height, grounds, blocks_mutable, blocks_immutable, percentages_range_obj, spawn_areas);
+        var map;
+        if(positions.length > 1){
+            var positions_obj = {}
+            for(let i = 1; i < positions.length; i++){
+                positions_obj[""+positions[i].x+","+ positions[i].y] = true;
+            }
+            
+            let way = false;
+            while(!way){
+                map = generateMapContent(map_content.width, map_content.height, grounds, blocks_mutable, blocks_immutable, percentages_range_obj, spawn_areas);
+                
+                way = wayPlayerToPlayer(map, JSON.parse(JSON.stringify(positions_obj)), [{x:positions[0].x, y:positions[0].y}])
+                
+            }
+        }
         
         //draw map
         for(let i = 0; i < map.length; i++){
             for(let j = 0; j < map[i].length; j++){
                 if(i == 0 || j == 0 || i == map.length-1 || j == map[i].length-1){
+                    
                     blocks_immutable.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "wall")
                 }else
                 if(map[i][j] == -1){
