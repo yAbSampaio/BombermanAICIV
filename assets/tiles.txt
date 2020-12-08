@@ -1,0 +1,22 @@
+!!!AJUSTAR TODAS AS ROTAS DAS SPRITES!!!
+
+Explosion:
+Width = 80 pix
+Height = 20 pix
+
+Explosion_End_Horizontal:
+Width = 80 pix
+Height = 20 pix
+
+Explosion_End_Vertical:
+Width = 20 pix
+Height = 80 pix
+
+Explosion_Middle_Horizontal:
+Width = 80 pix
+Height = 20 pix
+
+Explosion_Middle_Vertical:
+Width = 20 pix
+Height = 80 pix
+

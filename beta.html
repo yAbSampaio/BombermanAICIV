@@ -71,10 +71,6 @@
           frameWidth: 18,
           frameHeight: 16,
         });
-        this.load.spritesheet('explode', 'Player/explode.png', {
-          frameWidth: 38,
-          frameHeight: 40,
-        });
       }
 
       function create() {
@@ -252,34 +248,63 @@
         }
         if (cursors.space.isUp && space_pressed) {
             space_pressed = false;
-          bombs = this.physics.add.sprite(player.x, player.y, 'bomb');
-          bombs.setScale(1.5);
-          bombs.setCollideWorldBounds(true);
-          this.anims.create({
-            key: 'space',
-            frames: this.anims.generateFrameNumbers('bomb', {
-              start: 0,
-              end: 5,
-            }),
-            frameRate: 2,
-          });
-          this.physics.add.collider(bombs, platforms);
-          this.physics.add.collider(player, bombs);
-          this.physics.add.collider(player_2, bombs);
-          bombs.anims.play('space');
-          bombs.on('animationcomplete', function(){this.destroy()})
-          // bombs.onComplete(Bombexp());
+            //this.dropBomb();
+            bombs = this.physics.add.sprite(player.x, player.y, 'bomb');
+            bombs.setScale(1.5);
+            bombs.setCollideWorldBounds(true);
+            this.anims.create({
+              key: 'space',
+              frames: this.anims.generateFrameNumbers('bomb', {
+                start: 0,
+                end: 5,
+              }),
+              frameRate: 2,
+            });
+            this.physics.add.collider(bombs, platforms);
+            this.physics.add.collider(player, bombs);
+            this.physics.add.collider(player_2, bombs);
+            this.physics.add.collider(bombs, blocks_mutable);
+            this.physics.add.collider(bombs, blocks_immutable);
+            bombs.anims.play('space');
+            bombs.on('animationcomplete', Bombexp ,this);
         }
 
         if (!in_mov) {
           player.anims.play('turn');
         }
       }
+      function dropBomb() {
+        
+        bombs = this.physics.add.sprite(player.x, player.y, 'bomb');
+        bombs.setScale(1.5);
+        bombs.setCollideWorldBounds(true);
+        this.anims.create({
+          key: 'space',
+          frames: this.anims.generateFrameNumbers('bomb', {
+            start: 0,
+            end: 5,
+          }),
+          frameRate: 2,
+        });
+        this.physics.add.collider(bombs, platforms);
+        this.physics.add.collider(player, bombs);
+        this.physics.add.collider(player_2, bombs);
+        this.physics.add.collider(bombs, blocks_mutable);
+        this.physics.add.collider(bombs, blocks_immutable);
+        bombs.anims.play('space');
+        bombs.on('animationcomplete', Bombexp ,this);
+      }
 
       function Bombexp() {
+        // bomb.destroy();
+        this.load.spritesheet('explode', 'Player/explode.png', {
+          frameWidth: 38,
+          frameHeight: 40,
+        });
+        console.log("entrou");
         explode = this.physics.add.sprite(
-          player.x + 10,
-          player.y + 10,
+          500,
+          500,
           'explode'
         );
         explode.setScale(1.5);
