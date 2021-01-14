@@ -34,8 +34,8 @@
           update: update,
           extend: {
             dropBomb: dropBomb,
-            Bombexp: Bombexp
-            }
+            Bombexp: Bombexp,
+          },
         },
       };
 
@@ -55,31 +55,44 @@
       var bomPosX = [];
       var bomPosY = [];
       var tile_edge = 24;
-      var tile_half_edge = tile_edge/2;
+      var tile_half_edge = tile_edge / 2;
       var space_pressed = false;
-      var map_content = {width: config.width/tile_edge, height: config.height/tile_edge, tiled_map: null}
+      var map_content = {
+        width: config.width / tile_edge,
+        height: config.height / tile_edge,
+        tiled_map: null,
+      };
       var game = new Phaser.Game(config);
 
       function preload() {
-        this.load.image('ground', 'Player/map_ground_1.png');
-        this.load.image('block_mutable', 'Player/map_box_1.png');
-        this.load.image('wall', 'Player/map_wall_1.png');
-        this.load.image('block_immutable', 'Player/map_block_1.png');
-        this.load.spritesheet('player_1', 'Player/player_1.png', {
+        this.load.image('ground', 'assets/map/v_3/ground_1.png');
+        this.load.image('block_mutable', 'assets/map/v_3/box_1.png');
+        this.load.image('wall', 'assets/map/v_3/wall_1.png');
+        this.load.image('wall_2', 'assets/map/v_3/wall_1.png');
+        this.load.image('block_immutable', 'assets/map/v_3/block_1.png');
+        this.load.spritesheet('player_1', 'assets/player/1.png', {
           frameWidth: 38,
           frameHeight: 40,
         });
-        this.load.spritesheet('player_2', 'Player/player_2.png', {
+        this.load.spritesheet('player_2', 'assets/player/2.png', {
           frameWidth: 38,
           frameHeight: 40,
         });
-        this.load.spritesheet('bomb', 'Player/bombs.png', {
+        this.load.spritesheet('player_3', 'assets/player/3.png', {
+          frameWidth: 38,
+          frameHeight: 40,
+        });
+        this.load.spritesheet('player_4', 'assets/player/4.png', {
+          frameWidth: 38,
+          frameHeight: 40,
+        });
+        this.load.spritesheet('bomb', 'assets/bomb/1.png', {
           frameWidth: 18,
           frameHeight: 16,
         });
-        this.load.spritesheet('exp', 'Player/explode.png', {
-          frameWidth: 15.1,
-          frameHeight: 16,
+        this.load.spritesheet('exp', 'assets/explode/1.png', {
+          frameWidth: 18,
+          frameHeight: 20,
         });
       }
 
@@ -90,69 +103,136 @@
         blocks_mutable = this.physics.add.staticGroup();
         blocks_immutable = this.physics.add.staticGroup();
         var percentages_range_obj = {
-            100: {name:"ground", code:0},
-            90: {name:"block_immutable", code:-1},
-            50: {name:"block_mutable", code:1},
-            10: {name:"buff", code: 2}
+          100: { name: 'ground', code: 0 },
+          90: { name: 'block_immutable', code: -1 },
+          50: { name: 'block_mutable', code: 1 },
+          10: { name: 'buff', code: 2 },
         };
         var n_players = 4;
-        var distance = 20 //distance in tiles between players
+        var distance = 20; //distance in tiles between players
         //sort players positions
-        var positions = sortPlayersPosition(map_content.width, map_content.height, n_players, distance)
+        var positions = sortPlayersPosition(
+          map_content.width,
+          map_content.height,
+          n_players,
+          distance
+        );
         //console.log(positions)
-        
-        
-        var spawn_areas = calcStartArea(positions, map_content.width, map_content.height);
-        
+
+        var spawn_areas = calcStartArea(
+          positions,
+          map_content.width,
+          map_content.height
+        );
+
         //console.log(spawn_areas)
-        
+
         //generate map content
         var map;
-        if(positions.length > 1){
-            var positions_obj = {}
-            for(let i = 1; i < positions.length; i++){
-                positions_obj[""+positions[i].x+","+ positions[i].y] = true;
-            }
-            
-            let way = false;
-            while(!way){
-                map = generateMapContent(map_content.width, map_content.height, grounds, blocks_mutable, blocks_immutable, percentages_range_obj, spawn_areas);
-                
-                way = wayPlayerToPlayer(map, JSON.parse(JSON.stringify(positions_obj)), [{x:positions[0].x, y:positions[0].y}])
-                
-            }
+        if (positions.length > 1) {
+          var positions_obj = {};
+          for (let i = 1; i < positions.length; i++) {
+            positions_obj['' + positions[i].x + ',' + positions[i].y] = true;
+          }
+
+          let way = false;
+          while (!way) {
+            map = generateMapContent(
+              map_content.width,
+              map_content.height,
+              grounds,
+              blocks_mutable,
+              blocks_immutable,
+              percentages_range_obj,
+              spawn_areas
+            );
+
+            way = wayPlayerToPlayer(
+              map,
+              JSON.parse(JSON.stringify(positions_obj)),
+              [{ x: positions[0].x, y: positions[0].y }]
+            );
+          }
         }
-        
+        var cond = 0;
+        console.log(map);
         //draw map
-        for(let i = 0; i < map.length; i++){
-            for(let j = 0; j < map[i].length; j++){
-                if(i == 0 || j == 0 || i == map.length-1 || j == map[i].length-1){
-                    
-                    blocks_immutable.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "wall")
-                }else
-                if(map[i][j] == -1){
-                    blocks_immutable.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "block_immutable")
-                }else{
-                    grounds.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "ground")
-                    if(map[i][j] != 0){
-                        blocks_mutable.create(i*tile_edge+tile_half_edge, j*tile_edge+tile_half_edge, "block_mutable")
-                    }
-                }
+        for (let i = 0; i < map.length; i++) {
+          for (let j = 0; j < map[i].length; j++) {
+            if (
+              i == 0 ||
+              j == 0 ||
+              i == map.length - 1 ||
+              j == map[i].length - 1
+            ) {
+              if (cond === 0) {
+                cond = 1;
+                blocks_immutable.create(
+                  i * tile_edge + tile_half_edge,
+                  j * tile_edge + tile_half_edge,
+                  'wall'
+                );
+              } else {
+                cond = 0;
+                blocks_immutable.create(
+                  i * tile_edge + tile_half_edge,
+                  j * tile_edge + tile_half_edge,
+                  'wall_2'
+                );
+              }
+            } else if (map[i][j] == -1) {
+              blocks_immutable.create(
+                i * tile_edge + tile_half_edge,
+                j * tile_edge + tile_half_edge,
+                'block_immutable'
+              );
+            } else {
+              grounds.create(
+                i * tile_edge + tile_half_edge,
+                j * tile_edge + tile_half_edge,
+                'ground'
+              );
+              if (map[i][j] != 0) {
+                blocks_mutable.create(
+                  i * tile_edge + tile_half_edge,
+                  j * tile_edge + tile_half_edge,
+                  'block_mutable'
+                );
+              }
             }
+          }
         }
         // The player and its settings
-        player = this.physics.add.sprite(positions[0].x*tile_edge+tile_half_edge, positions[0].y*tile_edge+tile_half_edge, 'player_1');
-        player_2 = this.physics.add.sprite(positions[1].x*tile_edge+tile_half_edge, positions[1].y*tile_edge+tile_half_edge, 'player_2');
-        player_3 = this.physics.add.sprite(positions[2].x*tile_edge+tile_half_edge, positions[2].y*tile_edge+tile_half_edge, 'player_2');
-        player_4 = this.physics.add.sprite(positions[3].x*tile_edge+tile_half_edge, positions[3].y*tile_edge+tile_half_edge, 'player_2');
-        player.setScale(0.45);
+        player_1 = this.physics.add.sprite(
+          positions[0].x * tile_edge + tile_half_edge,
+          positions[0].y * tile_edge + tile_half_edge,
+          'player_1'
+        );
+        player_2 = this.physics.add.sprite(
+          positions[1].x * tile_edge + tile_half_edge,
+          positions[1].y * tile_edge + tile_half_edge,
+          'player_2'
+        );
+        player_3 = this.physics.add.sprite(
+          positions[2].x * tile_edge + tile_half_edge,
+          positions[2].y * tile_edge + tile_half_edge,
+          'player_3'
+        );
+        player_4 = this.physics.add.sprite(
+          positions[3].x * tile_edge + tile_half_edge,
+          positions[3].y * tile_edge + tile_half_edge,
+          'player_4'
+        );
+        player_1.setScale(0.45);
         player_2.setScale(0.45);
         player_3.setScale(0.45);
         player_4.setScale(0.45);
         //  Player physics properties. Give the little guy a slight bounce.
 
-        player.setCollideWorldBounds(true);
+        player_1.setCollideWorldBounds(true);
         player_2.setCollideWorldBounds(true);
+        player_3.setCollideWorldBounds(true);
+        player_4.setCollideWorldBounds(true);
         //  Our player animations, turning, walking left and walking right.
         this.anims.create({
           key: 'left',
@@ -185,8 +265,26 @@
         });
 
         this.anims.create({
-          key: 'turn',
+          key: 'turn_1',
           frames: [{ key: 'player_1', frame: 4 }],
+          frameRate: 20,
+        });
+
+        this.anims.create({
+          key: 'turn_2',
+          frames: [{ key: 'player_2', frame: 4 }],
+          frameRate: 20,
+        });
+
+        this.anims.create({
+          key: 'turn_3',
+          frames: [{ key: 'player_3', frame: 4 }],
+          frameRate: 20,
+        });
+
+        this.anims.create({
+          key: 'turn_4',
+          frames: [{ key: 'player_4', frame: 4 }],
           frameRate: 20,
         });
 
@@ -205,18 +303,16 @@
         //  Input Events
         cursors = this.input.keyboard.createCursorKeys();
 
-
         //  Collide the player with the platforms
-        this.physics.add.collider(player, platforms);
-        this.physics.add.collider(player, blocks_mutable);
-        
+        this.physics.add.collider(player_1, platforms);
+        this.physics.add.collider(player_1, blocks_mutable);
+
         // this.physics.add.collider(player, blocks_mutable, this, function () {
         //   this.kill();
         // });
-        this.physics.add.collider(player, blocks_immutable);
+        this.physics.add.collider(player_1, blocks_immutable);
         this.physics.add.collider(player_2, platforms);
-        this.physics.add.collider(player, player_2);
-        
+        this.physics.add.collider(player_1, player_2);
       }
 
       function update() {
@@ -225,59 +321,64 @@
         }
 
         var in_mov = false;
-        
-        if (cursors.up.isDown) {
-          player.setVelocityY(-160);
 
-          player.anims.play('up', true);
+        if (cursors.up.isDown) {
+          player_1.setVelocityY(-160);
+
+          player_1.anims.play('up', true);
 
           in_mov = true;
         } else if (cursors.down.isDown) {
-          player.setVelocityY(160);
+          player_1.setVelocityY(160);
 
-          player.anims.play('down', true);
+          player_1.anims.play('down', true);
 
           in_mov = true;
         } else {
-          player.setVelocityY(0);
+          player_1.setVelocityY(0);
           //   player.anims.play('turn');
         }
 
         if (cursors.left.isDown) {
-          player.setVelocityX(-160);
+          player_1.setVelocityX(-160);
 
-          player.anims.play('left', true);
+          player_1.anims.play('left', true);
 
           in_mov = true;
         } else if (cursors.right.isDown) {
-          player.setVelocityX(160);
+          player_1.setVelocityX(160);
 
-          player.anims.play('right', true);
+          player_1.anims.play('right', true);
 
           in_mov = true;
         } else {
-          player.setVelocityX(0);
+          player_1.setVelocityX(0);
         }
-        if(cursors.space.isDown && !space_pressed){
-            space_pressed = true;
+        if (cursors.space.isDown && !space_pressed) {
+          space_pressed = true;
         }
         if (cursors.space.isUp && space_pressed) {
-            space_pressed = false;
-            var posX = Math.floor(player.x/tile_edge);
-            var posY = Math.floor(player.y/tile_edge);
-            // console.log(mapReal[1][1]);
-            this.dropBomb();
+          space_pressed = false;
+          var posX = Math.floor(player_1.x / tile_edge);
+          var posY = Math.floor(player_1.y / tile_edge);
+          // console.log(mapReal[1][1]);
+          this.dropBomb();
         }
 
         if (!in_mov) {
-          player.anims.play('turn');
+          player_1.anims.play('turn_1');
+          player_2.anims.play('turn_2');
+          player_3.anims.play('turn_3');
+          player_4.anims.play('turn_4');
         }
       }
       function dropBomb() {
         // var posX = Math.floor(player.x/tile_edge);
         // var posY = Math.floor(player.y/tile_edge);
-        var bomX = ((Math.floor(player.x/tile_edge))*tile_edge)+tile_half_edge;
-        var bomY = ((Math.floor(player.y/tile_edge))*tile_edge)+tile_half_edge;
+        var bomX =
+          Math.floor(player_1.x / tile_edge) * tile_edge + tile_half_edge;
+        var bomY =
+          Math.floor(player_1.y / tile_edge) * tile_edge + tile_half_edge;
         bomPosX.push(bomX);
         bomPosY.push(bomY);
         bombs = this.physics.add.staticSprite(bomX, bomY, 'bomb');
@@ -291,27 +392,23 @@
           frameRate: 2,
         });
         this.physics.add.collider(bombs, platforms);
-        this.physics.add.collider(bombs, player);
+        this.physics.add.collider(bombs, player_1);
         this.physics.add.collider(player_2, bombs);
         this.physics.add.collider(bombs, blocks_mutable);
         this.physics.add.collider(bombs, blocks_immutable);
         bombs.anims.play('space');
-        bombs.on('animationcomplete',Bombexp ,this);
+        bombs.on('animationcomplete', Bombexp, this);
         bombs.on('animationcomplete', function () {
-            this.destroy();
-        } );
+          this.destroy();
+        });
       }
 
       function Destroybloc() {
-        console.log("teste");
+        console.log('teste');
       }
 
       function Bombexp() {
-        explode = this.physics.add.sprite(
-          bomPosX[0],
-          bomPosY[0],
-          'exp'
-        );
+        explode = this.physics.add.sprite(bomPosX[0], bomPosY[0], 'exp');
         bomPosX.shift();
         bomPosY.shift();
         explode.setScale(1.5);
@@ -320,14 +417,15 @@
           key: 'explo',
           frames: this.anims.generateFrameNumbers('exp', {
             start: 0,
-            end: 2,
+            end: 3,
           }),
           frameRate: 3,
+          repeat: -1,
         });
         explode.anims.play('explo');
         explode.on('animationcomplete', function () {
-            this.destroy();
-        } );
+          this.destroy();
+        });
         // this.physics.add.collider(Bombexp, blocks_mutable,);
       }
     </script>
