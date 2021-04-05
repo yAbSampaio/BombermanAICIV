@@ -53,6 +53,7 @@
       var blocks_immutable;
       var blocks_mutable;
       var bomPosX = [];
+      var mapObj = [];
       var bomPosY = [];
       var tile_edge = 24;
       var tile_half_edge = tile_edge / 2;
@@ -155,9 +156,10 @@
           }
         }
         var cond = 0;
-        console.log(map);
+        // console.log(map);
         //draw map
         for (let i = 0; i < map.length; i++) {
+          mapObj.push(new Array(map[i].length));
           for (let j = 0; j < map[i].length; j++) {
             if (
               i == 0 ||
@@ -193,6 +195,7 @@
                 'ground'
               );
               if (map[i][j] != 0) {
+                // mapObj[i][j] =
                 blocks_mutable.create(
                   i * tile_edge + tile_half_edge,
                   j * tile_edge + tile_half_edge,
@@ -305,11 +308,12 @@
 
         //  Collide the player with the platforms
         this.physics.add.collider(player_1, platforms);
-        this.physics.add.collider(player_1, blocks_mutable);
+        // this.physics.add.collider(player_1, blocks_mutable);
 
-        // this.physics.add.collider(player, blocks_mutable, this, function () {
-        //   this.kill();
-        // });
+        this.physics.add.collider(player_1, blocks_mutable, function () {
+          console.log(blocks_mutable.children.);
+          blocks_mutable.children.delete(25);
+        });
         this.physics.add.collider(player_1, blocks_immutable);
         this.physics.add.collider(player_2, platforms);
         this.physics.add.collider(player_1, player_2);
@@ -404,7 +408,9 @@
       }
 
       function Destroybloc() {
-        console.log('teste');
+        var X = Math.floor(player_1.x / tile_edge) * tile_edge + tile_half_edge;
+        var Y = Math.floor(player_1.y / tile_edge) * tile_edge + tile_half_edge;
+        console.log(blocks_mutable.children);
       }
 
       function Bombexp() {
